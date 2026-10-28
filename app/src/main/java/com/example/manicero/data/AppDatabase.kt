@@ -5,11 +5,14 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.manicero.model.Producto
+import com.example.manicero.model.Usuario
 
-@Database(entities = [Producto::class], version = 1, exportSchema = false)
+@Database(entities = [Producto::class, Usuario::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun productoDao(): ProductoDao
+
+    abstract fun usuarioDao(): UsuarioDao
 
     companion object {
         @Volatile
@@ -21,7 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "oyl_frutos_secos.db"
-                ).build()
+                ).fallbackToDestructiveMigration(true).build()
                 instancia = nueva
                 nueva
             }
