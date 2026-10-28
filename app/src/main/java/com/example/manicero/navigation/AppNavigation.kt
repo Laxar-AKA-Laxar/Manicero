@@ -1,60 +1,86 @@
 package com.example.manicero.navigation
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.manicero.view.CatalogoScreen
-import com.example.manicero.view.PantallaPendiente
+import com.example.manicero.view.BienvenidaScreen
+import com.example.manicero.view.LoginScreen
+import com.example.manicero.view.RegistroScreen
+import com.example.manicero.viewmodel.AuthViewModel
+
+private fun NavHostController.irAPrincipal() {
+    navigate(Destino.PRINCIPAL) { popUpTo(0) { inclusive = true } }
+}
+
+private fun NavHostController.irABienvenida() {
+    navigate(Destino.BIENVENIDA) { popUpTo(0) { inclusive = true } }
+}
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
-    val entrada by navController.currentBackStackEntryAsState()
-    val rutaActual = entrada?.destination?.route
+    val listo by authViewModel.listo.collectAsState()
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                rutasBarra.forEach { item ->
-                    NavigationBarItem(
-                        selected = rutaActual == item.ruta,
-                        onClick = {
-                            navController.navigate(item.ruta) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(item.icono, contentDescription = item.titulo) },
-                        label = { Text(item.titulo) }
-                    )
-                }
-            }
+    if (!listo) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Ruta.Inicio.ruta,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(Ruta.Inicio.ruta) { CatalogoScreen() }
-            composable(Ruta.Mapa.ruta) { PantallaPendiente("Mapa de tiendas") }
-            composable(Ruta.Escaner.ruta) { PantallaPendiente("Escáner QR") }
-            composable(Ruta.Pedidos.ruta) { PantallaPendiente("Mis pedidos") }
-            composable(Ruta.Perfil.ruta) { PantallaPendiente("Mi perfil") }
+        return
+    }
+
+    val inicio = remember {
+        if (authViewModel.usuario.value != null) Destino.PRINCIPAL else Destino.BIENVENIDA
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = inicio,
+        enterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { it / 4 } },
+        exitTransition = { fadeOut(tween(200)) }
+    ) {
+        composable(Destino.BIENVENIDA) {
+            BienvenidaScreen(
+                alComenzar = { navController.navigate(Destino.LOGIN) },
+                alCrearCuenta = { navController.navigate(Destino.REGISTRO) }
+            )
+        }
+        composable(Destino.LOGIN) {
+            LoginScreen(
+                viewModel = authViewModel,
+                alEntrar = { navController.irAPrincipal() },
+                alRegistrar = { navController.navigate(Destino.REGISTRO) }
+            )
+        }
+        composable(Destino.REGISTRO) {
+            RegistroScreen(
+                viewModel = authViewModel,
+                alRegistrar = { navController.irAPrincipal() },
+                alIrALogin = { navController.navigate(Destino.LOGIN) }
+            )
+        }
+        composable(Destino.PRINCIPAL) {
+            PrincipalNavigation(
+                authViewModel = authViewModel,
+                alCerrarSesion = {
+                    authViewModel.cerrarSesion()
+                    navController.irABienvenida()
+                }
+            )
         }
     }
 }
