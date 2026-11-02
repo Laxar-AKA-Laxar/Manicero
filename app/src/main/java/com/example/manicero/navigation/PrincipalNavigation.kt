@@ -30,6 +30,8 @@ import com.example.manicero.view.PerfilScreen
 import com.example.manicero.viewmodel.AuthViewModel
 import com.example.manicero.viewmodel.CarritoViewModel
 import com.example.manicero.viewmodel.PedidoViewModel
+import com.example.manicero.view.EscanerScreen
+import com.example.manicero.view.MapaScreen
 
 private const val RUTA_DETALLE = "detalle/{id}"
 private const val RUTA_CARRITO = "carrito"
@@ -128,8 +130,12 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
                     alSeguir = { navController.popBackStack(Ruta.Inicio.ruta, false) }
                 )
             }
-            composable(Ruta.Mapa.ruta) { PantallaPendiente("Mapa de tiendas") }
-            composable(Ruta.Escaner.ruta) { PantallaPendiente("Escáner QR") }
+            composable(Ruta.Mapa.ruta) { MapaScreen() }
+            composable(Ruta.Escaner.ruta) {
+                EscanerScreen(
+                    alAbrirProducto = { id -> navController.navigate("detalle/$id") }
+                )
+            }
             composable(Ruta.Pedidos.ruta) { PedidosScreen(pedidoViewModel) }
             composable(Ruta.Perfil.ruta) { PerfilScreen(authViewModel, alCerrarSesion) }
         }
