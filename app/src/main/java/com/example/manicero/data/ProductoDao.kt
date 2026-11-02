@@ -23,6 +23,9 @@ interface ProductoDao {
     @Query("SELECT * FROM productos WHERE codigoQr = :codigo LIMIT 1")
     suspend fun buscarPorQr(codigo: String): Producto?
 
+    @Query("UPDATE productos SET stock = stock - :cantidad WHERE id = :id AND stock >= :cantidad")
+    suspend fun descontarStock(id: Int, cantidad: Int): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(producto: Producto)
 

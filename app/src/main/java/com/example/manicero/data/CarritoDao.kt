@@ -19,6 +19,14 @@ interface CarritoDao {
     )
     fun observar(usuarioId: Int): Flow<List<ItemCarritoDetalle>>
 
+    @Query(
+        "SELECT p.id AS productoId, p.nombre AS nombre, p.precio AS precio, " +
+                "p.stock AS stock, c.cantidad AS cantidad " +
+                "FROM carrito c INNER JOIN productos p ON p.id = c.productoId " +
+                "WHERE c.usuarioId = :usuarioId ORDER BY p.nombre"
+    )
+    suspend fun listar(usuarioId: Int): List<ItemCarritoDetalle>
+
     @Query("SELECT * FROM carrito WHERE usuarioId = :usuarioId AND productoId = :productoId LIMIT 1")
     suspend fun buscar(usuarioId: Int, productoId: Int): ItemCarrito?
 
