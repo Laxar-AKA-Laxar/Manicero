@@ -21,26 +21,34 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.manicero.view.CarritoScreen
 import com.example.manicero.view.CatalogoScreen
+import com.example.manicero.view.ConfirmarPedidoScreen
 import com.example.manicero.view.DetalleScreen
+import com.example.manicero.view.ExitoPedidoScreen
 import com.example.manicero.view.PantallaPendiente
+import com.example.manicero.view.PedidosScreen
 import com.example.manicero.view.PerfilScreen
 import com.example.manicero.viewmodel.AuthViewModel
 import com.example.manicero.viewmodel.CarritoViewModel
+import com.example.manicero.viewmodel.PedidoViewModel
 
 private const val RUTA_DETALLE = "detalle/{id}"
 private const val RUTA_CARRITO = "carrito"
+private const val RUTA_CONFIRMAR = "confirmar"
+private const val RUTA_EXITO = "exito/{id}"
 
 @Composable
 fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit) {
     val navController = rememberNavController()
     val carritoViewModel: CarritoViewModel = viewModel()
+    val pedidoViewModel: PedidoViewModel = viewModel()
     val entrada by navController.currentBackStackEntryAsState()
     val rutaActual = entrada?.destination?.route
     val usuario by authViewModel.usuario.collectAsState()
     val cantidadCarrito by carritoViewModel.cantidadTotal.collectAsState()
 
-    LaunchedEffect(usuario?.id) {
+    LaunchedEffect(usuario) {
         carritoViewModel.fijarUsuario(usuario?.id ?: -1)
+        pedidoViewModel.fijarUsuario(usuario)
     }
 
     Scaffold(
@@ -90,12 +98,39 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
             composable(RUTA_CARRITO) {
                 CarritoScreen(
                     viewModel = carritoViewModel,
-                    alVolver = { navController.popBackStack() }
+                    alVolver = { navController.popBackStack() },
+                    alContinuar = { navController.navigate(RUTA_CONFIRMAR) }
+                )
+            }
+            composable(RUTA_CONFIRMAR) {
+                ConfirmarPedidoScreen(
+                    carritoViewModel = carritoViewModel,
+                    pedidoViewModel = pedidoViewModel,
+                    alVolver = { navController.popBackStack() },
+                    alConfirmar = { id ->
+                        navController.navigate("exito/$id") {
+                            popUpTo(RUTA_CARRITO) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            composable(
+                route = RUTA_EXITO,
+                arguments = listOf(navArgument("id") { type = NavType.IntType })
+            ) { respaldo ->
+                ExitoPedidoScreen(
+                    idPedido = respaldo.arguments?.getInt("id") ?: 0,
+                    alVerPedidos = {
+                        navController.navigate(Ruta.Pedidos.ruta) {
+                            popUpTo(Ruta.Inicio.ruta)
+                        }
+                    },
+                    alSeguir = { navController.popBackStack(Ruta.Inicio.ruta, false) }
                 )
             }
             composable(Ruta.Mapa.ruta) { PantallaPendiente("Mapa de tiendas") }
             composable(Ruta.Escaner.ruta) { PantallaPendiente("Escáner QR") }
-            composable(Ruta.Pedidos.ruta) { PantallaPendiente("Mis pedidos") }
+            composable(Ruta.Pedidos.ruta) { PedidosScreen(pedidoViewModel) }
             composable(Ruta.Perfil.ruta) { PerfilScreen(authViewModel, alCerrarSesion) }
         }
     }

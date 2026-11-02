@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,7 +36,11 @@ import com.example.manicero.model.ItemCarritoDetalle
 import com.example.manicero.viewmodel.CarritoViewModel
 
 @Composable
-fun CarritoScreen(viewModel: CarritoViewModel, alVolver: () -> Unit) {
+fun CarritoScreen(
+    viewModel: CarritoViewModel,
+    alVolver: () -> Unit,
+    alContinuar: () -> Unit
+) {
     val lista by viewModel.items.collectAsState()
     val total by viewModel.total.collectAsState()
     val aviso by viewModel.aviso.collectAsState()
@@ -82,10 +87,13 @@ fun CarritoScreen(viewModel: CarritoViewModel, alVolver: () -> Unit) {
                     fontWeight = FontWeight.Bold
                 )
             }
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(onClick = alContinuar, modifier = Modifier.fillMaxWidth()) {
+                Text("Continuar compra")
+            }
         }
     }
 }
-
 @Composable
 private fun LazyItemScope.FilaCarrito(item: ItemCarritoDetalle, viewModel: CarritoViewModel) {
     Card(modifier = Modifier.fillMaxWidth().animateItem()) {
