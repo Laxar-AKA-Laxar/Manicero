@@ -15,6 +15,9 @@ interface ProductoDao {
     fun obtenerTodos(): Flow<List<Producto>>
 
     @Query("SELECT * FROM productos WHERE id = :id")
+    fun observarPorId(id: Int): Flow<Producto?>
+
+    @Query("SELECT * FROM productos WHERE id = :id")
     suspend fun buscarPorId(id: Int): Producto?
 
     @Query("SELECT * FROM productos WHERE codigoQr = :codigo LIMIT 1")

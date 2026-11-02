@@ -9,6 +9,8 @@ class ProductoRepository(private val dao: ProductoDao) {
 
     val productos: Flow<List<Producto>> = dao.obtenerTodos()
 
+    fun observarPorId(id: Int): Flow<Producto?> = dao.observarPorId(id)
+
     suspend fun buscarPorId(id: Int): Producto? = dao.buscarPorId(id)
 
     suspend fun buscarPorQr(codigo: String): Producto? = dao.buscarPorQr(codigo)
