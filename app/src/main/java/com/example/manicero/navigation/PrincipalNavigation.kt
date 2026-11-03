@@ -23,20 +23,23 @@ import com.example.manicero.view.CarritoScreen
 import com.example.manicero.view.CatalogoScreen
 import com.example.manicero.view.ConfirmarPedidoScreen
 import com.example.manicero.view.DetalleScreen
+import com.example.manicero.view.EscanerScreen
 import com.example.manicero.view.ExitoPedidoScreen
-import com.example.manicero.view.PantallaPendiente
+import com.example.manicero.view.GestionProductosScreen
+import com.example.manicero.view.InventarioScreen
+import com.example.manicero.view.MapaScreen
 import com.example.manicero.view.PedidosScreen
 import com.example.manicero.view.PerfilScreen
+import com.example.manicero.view.ProductoFormScreen
 import com.example.manicero.viewmodel.AuthViewModel
 import com.example.manicero.viewmodel.CarritoViewModel
 import com.example.manicero.viewmodel.PedidoViewModel
-import com.example.manicero.view.EscanerScreen
-import com.example.manicero.view.MapaScreen
 
 private const val RUTA_DETALLE = "detalle/{id}"
 private const val RUTA_CARRITO = "carrito"
 private const val RUTA_CONFIRMAR = "confirmar"
 private const val RUTA_EXITO = "exito/{id}"
+private const val RUTA_PRODUCTO = "producto/{id}"
 
 @Composable
 fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit) {
@@ -47,6 +50,8 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
     val rutaActual = entrada?.destination?.route
     val usuario by authViewModel.usuario.collectAsState()
     val cantidadCarrito by carritoViewModel.cantidadTotal.collectAsState()
+    val esAdmin = usuario?.rol == "ADMIN"
+    val barra = if (esAdmin) rutasAdmin else rutasBarra
 
     LaunchedEffect(usuario) {
         carritoViewModel.fijarUsuario(usuario?.id ?: -1)
@@ -56,7 +61,7 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
     Scaffold(
         bottomBar = {
             NavigationBar {
-                rutasBarra.forEach { item ->
+                barra.forEach { item ->
                     NavigationBarItem(
                         selected = rutaActual == item.ruta,
                         onClick = {
@@ -81,11 +86,24 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Ruta.Inicio.ruta) {
-                CatalogoScreen(
-                    cantidadCarrito = cantidadCarrito,
-                    alAbrirProducto = { id -> navController.navigate("detalle/$id") },
-                    alAbrirCarrito = { navController.navigate(RUTA_CARRITO) }
-                )
+                if (esAdmin) {
+                    GestionProductosScreen(
+                        alNuevo = { navController.navigate("producto/-1") },
+                        alEditar = { id -> navController.navigate("producto/$id") }
+                    )
+                } else {
+                    CatalogoScreen(
+                        cantidadCarrito = cantidadCarrito,
+                        alAbrirProducto = { id -> navController.navigate("detalle/$id") },
+                        alAbrirCarrito = { navController.navigate(RUTA_CARRITO) }
+                    )
+                }
+            }
+            composable(
+                route = RUTA_PRODUCTO,
+                arguments = listOf(navArgument("id") { type = NavType.IntType })
+            ) {
+                ProductoFormScreen(alVolver = { navController.popBackStack() })
             }
             composable(
                 route = RUTA_DETALLE,
@@ -131,6 +149,7 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
                 )
             }
             composable(Ruta.Mapa.ruta) { MapaScreen() }
+            composable(Ruta.Inventario.ruta) { InventarioScreen() }
             composable(Ruta.Escaner.ruta) {
                 EscanerScreen(
                     alAbrirProducto = { id -> navController.navigate("detalle/$id") }
