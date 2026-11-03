@@ -4,10 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.manicero.data.AppDatabase
+import com.example.manicero.data.Notificador
 import com.example.manicero.model.EstadoPedido
 import com.example.manicero.model.Pedido
 import com.example.manicero.model.PedidoItem
 import com.example.manicero.model.Usuario
+import com.example.manicero.repository.NotificacionRepository
 import com.example.manicero.repository.PedidoRepository
 import com.example.manicero.repository.StockInsuficienteException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,6 +35,10 @@ data class ConfirmarUi(
 class PedidoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repositorio = PedidoRepository(AppDatabase.obtener(application))
+    private val notificaciones = NotificacionRepository(
+        AppDatabase.obtener(application),
+        Notificador(application)
+    )
 
     private val _usuario = MutableStateFlow<Usuario?>(null)
 
@@ -74,7 +80,10 @@ class PedidoViewModel(application: Application) : AndroidViewModel(application) 
 
     fun avanzar(pedido: Pedido) {
         val siguiente = EstadoPedido.siguiente(pedido.estado) ?: return
-        viewModelScope.launch { repositorio.cambiarEstado(pedido.id, siguiente) }
+        viewModelScope.launch {
+            repositorio.cambiarEstado(pedido.id, siguiente)
+            notificaciones.estadoCambiado(pedido, siguiente)
+        }
     }
 
     fun confirmarPedido(alExito: (Int) -> Unit) {
@@ -83,6 +92,7 @@ class PedidoViewModel(application: Application) : AndroidViewModel(application) 
             _confirmar.update { it.copy(cargando = true, error = null) }
             try {
                 val id = repositorio.confirmar(usuario.id, _confirmar.value.entrega)
+                notificaciones.nuevoPedido(id.toInt())
                 _confirmar.value = ConfirmarUi()
                 alExito(id.toInt())
             } catch (e: StockInsuficienteException) {
