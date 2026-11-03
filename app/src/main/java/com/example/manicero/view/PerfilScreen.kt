@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,7 +30,12 @@ import androidx.compose.ui.unit.dp
 import com.example.manicero.viewmodel.AuthViewModel
 
 @Composable
-fun PerfilScreen(viewModel: AuthViewModel, alCerrarSesion: () -> Unit) {
+fun PerfilScreen(
+    viewModel: AuthViewModel,
+    noLeidas: Int,
+    alAbrirNotificaciones: () -> Unit,
+    alCerrarSesion: () -> Unit
+) {
     val usuario by viewModel.usuario.collectAsState()
 
     Column(
@@ -61,6 +67,10 @@ fun PerfilScreen(viewModel: AuthViewModel, alCerrarSesion: () -> Unit) {
             Icons.Default.Person,
             if (usuario?.rol == "ADMIN") "Administrador" else "Cliente"
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedButton(onClick = alAbrirNotificaciones, modifier = Modifier.fillMaxWidth()) {
+            Text(if (noLeidas > 0) "Notificaciones ($noLeidas nuevas)" else "Notificaciones")
+        }
         Spacer(modifier = Modifier.weight(1f))
         Button(onClick = alCerrarSesion, modifier = Modifier.fillMaxWidth()) {
             Text("Cerrar sesión")
