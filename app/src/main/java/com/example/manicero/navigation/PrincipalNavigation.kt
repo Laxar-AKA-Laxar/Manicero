@@ -28,11 +28,13 @@ import com.example.manicero.view.ExitoPedidoScreen
 import com.example.manicero.view.GestionProductosScreen
 import com.example.manicero.view.InventarioScreen
 import com.example.manicero.view.MapaScreen
+import com.example.manicero.view.NotificacionesScreen
 import com.example.manicero.view.PedidosScreen
 import com.example.manicero.view.PerfilScreen
 import com.example.manicero.view.ProductoFormScreen
 import com.example.manicero.viewmodel.AuthViewModel
 import com.example.manicero.viewmodel.CarritoViewModel
+import com.example.manicero.viewmodel.NotificacionesViewModel
 import com.example.manicero.viewmodel.PedidoViewModel
 
 private const val RUTA_DETALLE = "detalle/{id}"
@@ -40,22 +42,26 @@ private const val RUTA_CARRITO = "carrito"
 private const val RUTA_CONFIRMAR = "confirmar"
 private const val RUTA_EXITO = "exito/{id}"
 private const val RUTA_PRODUCTO = "producto/{id}"
+private const val RUTA_NOTIFICACIONES = "notificaciones"
 
 @Composable
 fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit) {
     val navController = rememberNavController()
     val carritoViewModel: CarritoViewModel = viewModel()
     val pedidoViewModel: PedidoViewModel = viewModel()
+    val notificacionesViewModel: NotificacionesViewModel = viewModel()
     val entrada by navController.currentBackStackEntryAsState()
     val rutaActual = entrada?.destination?.route
     val usuario by authViewModel.usuario.collectAsState()
     val cantidadCarrito by carritoViewModel.cantidadTotal.collectAsState()
+    val noLeidas by notificacionesViewModel.noLeidas.collectAsState()
     val esAdmin = usuario?.rol == "ADMIN"
     val barra = if (esAdmin) rutasAdmin else rutasBarra
 
     LaunchedEffect(usuario) {
         carritoViewModel.fijarUsuario(usuario?.id ?: -1)
         pedidoViewModel.fijarUsuario(usuario)
+        notificacionesViewModel.fijarUsuario(usuario?.id ?: -1)
     }
 
     Scaffold(
@@ -156,7 +162,25 @@ fun PrincipalNavigation(authViewModel: AuthViewModel, alCerrarSesion: () -> Unit
                 )
             }
             composable(Ruta.Pedidos.ruta) { PedidosScreen(pedidoViewModel) }
-            composable(Ruta.Perfil.ruta) { PerfilScreen(authViewModel, alCerrarSesion) }
+            composable(Ruta.Perfil.ruta) {
+                PerfilScreen(
+                    viewModel = authViewModel,
+                    noLeidas = noLeidas,
+                    alAbrirNotificaciones = { navController.navigate(RUTA_NOTIFICACIONES) },
+                    alCerrarSesion = alCerrarSesion
+                )
+            }
+            composable(RUTA_NOTIFICACIONES) {
+                NotificacionesScreen(
+                    viewModel = notificacionesViewModel,
+                    alAbrir = { destino ->
+                        navController.navigate(destino) {
+                            launchSingleTop = true
+                        }
+                    },
+                    alVolver = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
