@@ -31,7 +31,8 @@ class ProductoViewModel(application: Application) : AndroidViewModel(application
         _categoria
     ) { lista, texto, categoriaElegida ->
         lista.filter { producto ->
-            producto.nombre.contains(texto, ignoreCase = true) &&
+            producto.activo &&
+                    producto.nombre.contains(texto, ignoreCase = true) &&
                     (categoriaElegida == null || producto.categoria == categoriaElegida)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
