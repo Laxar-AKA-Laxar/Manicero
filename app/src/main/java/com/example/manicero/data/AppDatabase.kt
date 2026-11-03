@@ -12,7 +12,7 @@ import com.example.manicero.model.Usuario
 
 @Database(
     entities = [Producto::class, Usuario::class, ItemCarrito::class, Pedido::class, PedidoItem::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

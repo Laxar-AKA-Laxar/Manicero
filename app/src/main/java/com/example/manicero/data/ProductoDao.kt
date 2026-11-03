@@ -23,8 +23,17 @@ interface ProductoDao {
     @Query("SELECT * FROM productos WHERE codigoQr = :codigo LIMIT 1")
     suspend fun buscarPorQr(codigo: String): Producto?
 
+    @Query("SELECT COALESCE(MAX(id), 0) FROM productos")
+    suspend fun maximoId(): Int
+
     @Query("UPDATE productos SET stock = stock - :cantidad WHERE id = :id AND stock >= :cantidad")
     suspend fun descontarStock(id: Int, cantidad: Int): Int
+
+    @Query("UPDATE productos SET stock = MAX(0, stock + :cambio) WHERE id = :id")
+    suspend fun ajustarStock(id: Int, cambio: Int)
+
+    @Query("UPDATE productos SET activo = :activo WHERE id = :id")
+    suspend fun cambiarActivo(id: Int, activo: Boolean)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(producto: Producto)

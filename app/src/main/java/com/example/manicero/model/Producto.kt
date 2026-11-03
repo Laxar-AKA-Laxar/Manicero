@@ -12,5 +12,9 @@ data class Producto(
     val precio: Int,
     val stock: Int,
     val imagenUri: String? = null,
-    val codigoQr: String
+    val codigoQr: String,
+    val descripcion: String = "",
+    val presentacion: String = "",
+    val activo: Boolean = true,
+    val stockMinimo: Int = 5
 )
